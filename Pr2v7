@@ -1,0 +1,212 @@
+import matplotlib.pyplot as plt
+import pandas
+import seaborn as sns
+import numpy as np
+import pandas as pd
+from openpyxl import load_workbook
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+
+fluctuations = ['Fluctuations_X_in_the_left_bearing', 'Fluctuations_Y_in_the_left_bearing',
+                'Fluctuations_X_in_the_right_bearing', 'Fluctuations_Y_in_the_right_bearing',
+                'Fluctuations_X_in_the_left_bearing_smooth', 'Fluctuations_Y_in_the_left_bearing_smooth',
+                'Fluctuations_X_in_the_right_bearing_smooth', 'Fluctuations_Y_in_the_right_bearing_smooth']
+
+temperatures = ['Temperature_in_the_left_bearing', 'Temperature_in_the_right_bearing']
+
+attributes = ['Fluctuations_X_in_the_left_bearing', 'Fluctuations_Y_in_the_left_bearing',
+              'Fluctuations_X_in_the_right_bearing', 'Fluctuations_Y_in_the_right_bearing',
+              'Fluctuations_X_in_the_left_bearing_smooth', 'Fluctuations_Y_in_the_left_bearing_smooth',
+              'Fluctuations_X_in_the_right_bearing_smooth', 'Fluctuations_Y_in_the_right_bearing_smooth',
+              'Temperature_in_the_left_bearing', 'Temperature_in_the_right_bearing']
+
+
+def hist_for_attribute_set(df, labels, ax, bin_num=25, y_scale='linear'):
+    for i, col in enumerate(labels):
+        ax[i].set_yscale(y_scale)
+        ax[i].tick_params(labelsize=10)
+        ax[i].set_xlabel(col)
+
+        # уберем лишние границы графика
+        ax[i].spines['right'].set_visible(False)
+        ax[i].spines['top'].set_visible(False)
+        ax[i].grid()
+
+        ax[i].hist(df[col], bin_num, density=False, color='#377eb8', alpha=.75)  # синий
+
+    # если графиков меньше чем есть в сетке, убираем лишние оси
+    len_labels = len(labels)
+    len_ax = len(ax)
+    if len_labels < len_ax:
+        for ax in ax[len_labels: len_labels + (len_ax - len_labels)]:
+            ax.axis('off')
+
+
+def fun_paint_hist(df):
+    fig, ax = plt.subplots(nrows=1, ncols=len(fluctuations), figsize=(20, 5))
+
+    hist_for_attribute_set(df, fluctuations, ax, bin_num=20, y_scale='log')
+
+    ax[0].set_ylabel('Число записей')
+    plt.suptitle('Гистограммы: Вещественные параметры', fontsize=16, y=.92)
+    fig.tight_layout(rect=[0, .03, 1, .95])
+    plt.show()
+
+    fig, ax = plt.subplots(nrows=1, ncols=len(temperatures), figsize=(20, 5))
+
+    hist_for_attribute_set(df, temperatures, ax, bin_num=20, y_scale='log')
+
+    ax[0].set_ylabel('Число записей')
+    plt.suptitle('Гистограммы: Вещественные параметры', fontsize=16, y=.92)
+    fig.tight_layout(rect=[0, .03, 1, .95])
+    plt.show()
+
+
+def hist_for_attribute_set2(df_1, df_2, labels, ax, bin_num=25, y_scale='linear'):
+    for i, col in enumerate(labels):
+        ax[i].set_yscale(y_scale)
+        ax[i].tick_params(labelsize=10)
+        ax[i].set_xlabel(col)
+
+        # уберем лишние границы графика
+        ax[i].spines['right'].set_visible(False)
+        ax[i].spines['top'].set_visible(False)
+        ax[i].grid()
+
+        ax[i].hist(df_1[col], bin_num, density=False, color='#e99e75', alpha=.75)
+        ax[i].hist(df_2[col], bin_num, density=False, color='#44426e', alpha=.75)  # синий
+
+    # если графиков меньше чем есть в сетке, убираем лишние оси
+    len_labels = len(labels)
+    len_ax = len(ax)
+    if len_labels < len_ax:
+        for ax in ax[len_labels: len_labels + (len_ax - len_labels)]:
+            ax.axis('off')
+
+
+def fun_paint_hist2(df_1, df_2):
+    fig, ax = plt.subplots(nrows=1, ncols=len(fluctuations), figsize=(20, 5))
+
+    hist_for_attribute_set2(df_1, df_2, fluctuations, ax, bin_num=20, y_scale='log')
+
+    ax[0].set_ylabel('Число записей')
+    plt.suptitle('Гистограммы: Вещественные параметры', fontsize=16, y=.92)
+    fig.tight_layout(rect=[0, .03, 1, .95])
+    plt.show()
+
+    fig, ax = plt.subplots(nrows=1, ncols=len(temperatures), figsize=(20, 5))
+
+    hist_for_attribute_set2(df_1, df_2, temperatures, ax, y_scale='log')
+
+    ax[0].set_ylabel('Число записей')
+    plt.suptitle('Гистограммы: Вещественные параметры', fontsize=16, y=.92)
+    fig.tight_layout(rect=[0, .03, 1, .95])
+    plt.show()
+
+
+def lineplot_for_atribute_set(df, labels, ax):
+    for i, col in enumerate(labels):
+        ax[i].set_xlabel(col)
+        ax[i].plot(df[col], color='black', linewidth=.65, label='Attack')
+
+        # уберем лишние границы графика
+        ax[i].spines['right'].set_visible(False)
+        ax[i].spines['top'].set_visible(False)
+        ax[i].legend(loc='upper right')
+        ax[i].grid()
+        ax[i].set_xlim(0, 1000)
+
+
+def lineplot_for_atribute_set2(df_1, df_2, labels, ax):
+    for i, col in enumerate(labels):
+        ax[i].set_xlabel(col)
+        ax[i].plot(df_1[col], color='#42354c', linewidth=.65, label='С дефектом')
+        ax[i].plot(df_2[col], color='#dea450', linewidth=.65, label='Без дефекта')
+
+        # уберем лишние границы графика
+        ax[i].spines['right'].set_visible(False)
+        ax[i].spines['top'].set_visible(False)
+        ax[i].legend(loc='upper right')
+        ax[i].grid()
+
+
+def fun_paint_lin(df_1, df_2):
+    fig, ax = plt.subplots(nrows=len(fluctuations), ncols=1, figsize=(20, 25))
+
+    lineplot_for_atribute_set(df_1, fluctuations, ax)
+    fig.suptitle('Изменение вещественных параметров', fontsize=16, y=.895)
+    plt.show()
+
+    fig, ax = plt.subplots(nrows=len(temperatures), ncols=1, figsize=(20, 25))
+
+    lineplot_for_atribute_set2(df_1, df_2, temperatures, ax)
+    fig.suptitle('Изменение вещественных параметров', fontsize=16, y=.895)
+    plt.show()
+
+
+def heatmap(df, ax, title):
+    corr = df.corr()
+
+    # пропустим пары со слабой корреляцией, попробуем поэкспериментировать с этой настройкой
+    df_corr = corr[(corr >= .4) | (corr <= -.4)]
+
+    mask = np.triu(np.ones_like(corr))
+    sns.heatmap(
+        df_corr,
+        cbar=False,
+        mask=mask,
+        ax=ax,
+        annot=True,
+        cmap='bone',
+        vmin=-1,
+        vmax=1,
+    )
+
+    ax.title.set_text(title)
+    ax.tick_params(
+        top=False,
+        bottom=False,
+        left=False,
+        right=False,
+    )
+
+
+def fun_paint_heatmap(df):
+    fig, ax = plt.subplots(figsize=(7, 7), constrained_layout=True)
+    heatmap(df[attributes], ax, 'Матрица корреляции')
+    plt.show()
+
+def fun_pca(df):
+    x = df[attributes].values
+
+    # нормализуем значения
+    x = StandardScaler().fit_transform(x)
+
+    pca = PCA(n_components=3)
+    pca.fit_transform(x)
+    print(f'Explained variance: {pca.explained_variance_ratio_}\tSum: {pca.explained_variance_ratio_.sum()}')
+
+
+if __name__ == '__main__':
+    df42 = pd.read_csv(r"C:\Users\Анна Рудницкая\PycharmProjects\pythonProject\date\data_4_2.csv")
+    df43 = pd.read_csv(r"C:\Users\Анна Рудницкая\PycharmProjects\pythonProject\date\data_4_3.csv")
+    df44 = pd.read_csv(r"C:\Users\Анна Рудницкая\PycharmProjects\pythonProject\date\data_4_4.csv")
+    df51 = pd.read_csv(r"C:\Users\Анна Рудницкая\PycharmProjects\pythonProject\date\data_5_1.csv")
+
+    pd.set_option('display.expand_frame_repr', False)
+    # fun_paint_hist(df51)
+    # fun_paint_hist2(df51, df44)
+    # fun_paint_lin(df42)
+    # fun_paint_lin(df44, df51)
+    # fun_paint_heatmap(df51)
+    print(fun_pca(df51))
+
+    # for a in [df42, df43, df44, df51]:
+    #     a.info()
+    #
+    # for a in [df42, df43, df44, df51]:
+    #     print(a.describe())
+
+    # writer = pandas.ExcelWriter('Masterfile.xlsx')
+    # df51.describe().to_excel(writer)
+    # writer.save()
